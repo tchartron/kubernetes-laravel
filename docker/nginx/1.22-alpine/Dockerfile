@@ -11,7 +11,7 @@ FROM node:18.4-alpine3.16 as frontend_sources
 
 ARG LARAVEL_ROOT
 
-WORKDIR /var/www/k8s-laravel
+WORKDIR /var/www/kubernetes-laravel
 
 # We need to copy in the Laravel files to make everything available to our frontend compilation
 COPY --chown=node $LARAVEL_ROOT .
@@ -31,7 +31,7 @@ RUN npm install && \
 # as well as serve any static content.
 FROM nginx:1.22-alpine as nginx
 
-WORKDIR /var/www/k8s-laravel
+WORKDIR /var/www/kubernetes-laravel
 
 # We need to add our NGINX template to the container for startup,
 # and configuration.
@@ -39,4 +39,4 @@ COPY docker/nginx/1.22-alpine/conf/server.conf.template /etc/nginx/templates/def
 
 # Copy in ONLY the public directory of our project.
 # This is where all the static assets will live, which nginx will serve for us.
-COPY --from=frontend_sources --chown=nginx /var/www/k8s-laravel/public /var/www/k8s-laravel/public
+COPY --from=frontend_sources --chown=nginx /var/www/kubernetes-laravel/public /var/www/kubernetes-laravel/public

@@ -9,10 +9,10 @@ spec:
       template:
         spec:
           imagePullSecrets:
-          - name: gitlab-k8s-laravel-cred
+          - name: gitlab-kubernetes-laravel-cred
           containers:
           - name: scheduler
-            image: registry.gitlab.com/devops0077/k8s-laravel/php-cli:0.0.1
+            image: registry.gitlab.com/devops0077/kubernetes-laravel/php-cli:0.0.1
             imagePullPolicy: Always
             command:
             - php

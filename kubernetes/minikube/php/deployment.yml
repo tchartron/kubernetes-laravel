@@ -18,11 +18,11 @@ spec:
         tier: backend
     spec:
       imagePullSecrets:
-      - name: gitlab-k8s-laravel-cred
+      - name: gitlab-kubernetes-laravel-cred
       # This is bad because it runs migrations everytime a pod is started, meaning it migrate database when scaling app ...
       # initContainers: # Run laravel migrations and stops deployment if it fails
       # - name: migrations # Use for logs : kubectl logs php-fpm-856dcb9754-trf65 -c migrations
-      #   image: registry.gitlab.com/devops0077/k8s-laravel/php-cli:0.0.1
+      #   image: registry.gitlab.com/devops0077/kubernetes-laravel/php-cli:0.0.1
       #   imagePullPolicy: Always
       #   command:
       #   - php
@@ -37,7 +37,7 @@ spec:
       #       name: php-configmap
       containers:
       - name: php-fpm
-        image: registry.gitlab.com/devops0077/k8s-laravel/php-fpm:0.0.1
+        image: registry.gitlab.com/devops0077/kubernetes-laravel/php-fpm:0.0.1
         imagePullPolicy: Always
         envFrom:
         - secretRef:

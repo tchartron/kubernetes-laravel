@@ -4,7 +4,7 @@ server {
 
     # We need to set the root for our sevrer,
     # so any static file requests gets loaded from the correct path
-    root /var/www/k8s-laravel/public;
+    root /var/www/kubernetes-laravel/public;
 
     index index.php index.html index.htm index.nginx-debian.html;
 

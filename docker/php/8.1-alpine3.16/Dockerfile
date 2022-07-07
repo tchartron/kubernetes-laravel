@@ -19,9 +19,9 @@ FROM php:8.1-cli-alpine3.16 as backend_sources
 # ARG PHP_BUILD_DEPS
 ARG LARAVEL_ROOT
 
-RUN mkdir -p /var/www/k8s-laravel /var/www/k8s-laravel/bin
+RUN mkdir -p /var/www/kubernetes-laravel /var/www/kubernetes-laravel/bin
 
-WORKDIR /var/www/k8s-laravel
+WORKDIR /var/www/kubernetes-laravel
 
 # Commenting this and will run in the fpm build step because we do not have the Redis php extension that is causing database.php Redis::SERIALIZER_MSGPACK to fail
 # Installing Redis php ext with lz4 and msg pack
@@ -46,7 +46,7 @@ RUN chmod +x /usr/local/bin/composer
 # And not accidentally run malicious scripts
 RUN addgroup -S composer \
     && adduser -S composer -G composer \
-    && chown -R composer /var/www/k8s-laravel
+    && chown -R composer /var/www/kubernetes-laravel
 
 # Next we want to switch over to the composer user before running installs.
 # This is very important, so any extra scripts that composer wants to run,
@@ -92,7 +92,7 @@ ARG PHP_EXTS
 ARG PHP_BUILD_DEPS
 ARG PHP_RUNTIME_DEPS
 
-WORKDIR /var/www/k8s-laravel
+WORKDIR /var/www/kubernetes-laravel
 
 # We need to install some requirements into our image,
 # used to compile our PHP extensions, as well as install all the extensions themselves.
@@ -130,8 +130,8 @@ RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
 RUN rm -rf /tmp/*
 
 # Next we have to copy in our code base from our initial build which we installed in the previous stage
-COPY --from=backend_sources /var/www/k8s-laravel /var/www/k8s-laravel
-# COPY --from=frontend_sources /var/www/k8s-laravel/public /var/www/k8s-laravel/public
+COPY --from=backend_sources /var/www/kubernetes-laravel /var/www/kubernetes-laravel
+# COPY --from=frontend_sources /var/www/kubernetes-laravel/public /var/www/kubernetes-laravel/public
 
 
 ##################################################
@@ -146,12 +146,12 @@ FROM cli as cron
 
 LABEL maintainer="Thomas Chartron <thomas.chartron@gmail.com>"
 
-WORKDIR /var/www/k8s-laravel
+WORKDIR /var/www/kubernetes-laravel
 
 # We want to create a laravel.cron file with Laravel cron settings, which we can import into crontab,
 # and run crond as the primary command in the foreground
 RUN touch laravel.cron && \
-    echo "* * * * * cd /var/www/k8s-laravel && php artisan schedule:run" >> laravel.cron && \
+    echo "* * * * * cd /var/www/kubernetes-laravel && php artisan schedule:run" >> laravel.cron && \
     crontab laravel.cron
 
 CMD ["crond", "-l", "2", "-f"]
@@ -181,7 +181,7 @@ ENV OPCACHE_ENABLE="1" \
     OPCACHE_JIT_BUFFER_SIZE="256M" \
     OPCACHE_JIT_DEBUG="0"
 
-WORKDIR /var/www/k8s-laravel
+WORKDIR /var/www/kubernetes-laravel
 
 # We need to install some requirements into our image,
 # used to compile our PHP extensions, as well as install all the extensions themselves.
@@ -227,8 +227,8 @@ RUN rm -rf /tmp/*
 USER www-data
 
 # We have to copy in our code base from our initial build which we installed in the previous stage
-COPY --from=backend_sources --chown=www-data /var/www/k8s-laravel /var/www/k8s-laravel
-# COPY --from=frontend_sources --chown=www-data /var/www/k8s-laravel/public /var/www/k8s-laravel/public
+COPY --from=backend_sources --chown=www-data /var/www/kubernetes-laravel /var/www/kubernetes-laravel
+# COPY --from=frontend_sources --chown=www-data /var/www/kubernetes-laravel/public /var/www/kubernetes-laravel/public
 
 # Laravel cache command for production
 RUN php artisan config:cache
