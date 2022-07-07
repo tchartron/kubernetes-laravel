@@ -23,8 +23,7 @@ RUN mkdir -p /var/www/kubernetes-laravel /var/www/kubernetes-laravel/bin
 
 WORKDIR /var/www/kubernetes-laravel
 
-# Commenting this and will run in the fpm build step because we do not have the Redis php extension that is causing database.php Redis::SERIALIZER_MSGPACK to fail
-# Installing Redis php ext with lz4 and msg pack
+# if the redis php extension is not installed, config/database.php Redis::SERIALIZER_MSGPACK fails when generating autoloader
 RUN apk add --virtual build-dependencies --no-cache ${PHPIZE_DEPS} lz4-dev \
     && pecl install msgpack \
     && mkdir -p /tmp/pear \
@@ -42,37 +41,24 @@ RUN apk add --virtual build-dependencies --no-cache ${PHPIZE_DEPS} lz4-dev \
 COPY --from=composer:2.3 /usr/bin/composer /usr/local/bin/composer
 RUN chmod +x /usr/local/bin/composer
 
-# We need to create a composer group and user, and create a home directory for it, so we keep the rest of our image safe,
-# And not accidentally run malicious scripts
 RUN addgroup -S composer \
     && adduser -S composer -G composer \
     && chown -R composer /var/www/kubernetes-laravel
 
-# Next we want to switch over to the composer user before running installs.
-# This is very important, so any extra scripts that composer wants to run,
-# don't have access to the root filesystem.
-# This especially important when installing packages from unverified sources.
+# Switch over to the composer user before running installs (isolated from root filesystem)
 USER composer
 
 # Copy in our dependency files.
-# We want to leave the rest of the code base out for now,
 # so Docker can build a cache of this layer,
-# and only rebuild when the dependencies of our application changes.
 COPY --chown=composer $LARAVEL_ROOT/composer.json $LARAVEL_ROOT/composer.lock ./
 
 # Install all the dependencies without running any installation scripts.
-# We skip scripts as the code base hasn't been copied in yet and script will likely fail,
-# This allows to cache previous runs and layers.
-# As long as comoser.json and composer.lock doesn't change the install will be cached.
+# As long as composer.json and composer.lock doesn't change the install will be cached.
 RUN composer install --no-dev --no-scripts --no-autoloader --prefer-dist
 
-# Copy in our actual source code so we can run the installation scripts we need
-# At this point all the PHP packages have been installed,
-# and all that is left to do, is to run any installation scripts which depends on the code base
 COPY --chown=composer $LARAVEL_ROOT .
 
-# Now that the code base and packages are all available,
-# we can run the install again, and let it run any install scripts.
+# run the install again, and let it run any install scripts.
 RUN composer install --optimize-autoloader --no-dev --prefer-dist
 
 USER root
@@ -94,8 +80,6 @@ ARG PHP_RUNTIME_DEPS
 
 WORKDIR /var/www/kubernetes-laravel
 
-# We need to install some requirements into our image,
-# used to compile our PHP extensions, as well as install all the extensions themselves.
 # naming the virtual package build-dependencies prevents docker-php-ext-enable or docker-php-ext-install from removing PHPIZE_DEPS !
 RUN apk add --virtual build-dependencies --no-cache ${PHPIZE_DEPS} ${PHP_BUILD_DEPS} \
     # PHP extensions configure
@@ -121,17 +105,13 @@ RUN apk add --virtual build-dependencies --no-cache ${PHPIZE_DEPS} ${PHP_BUILD_D
 # Install runtime dependencies
 RUN apk add --no-cache ${PHP_RUNTIME_DEPS}
 
-######################
 ### PHP configurations
-######################
 RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
 
 # Cleanup
 RUN rm -rf /tmp/*
 
-# Next we have to copy in our code base from our initial build which we installed in the previous stage
 COPY --from=backend_sources /var/www/kubernetes-laravel /var/www/kubernetes-laravel
-# COPY --from=frontend_sources /var/www/kubernetes-laravel/public /var/www/kubernetes-laravel/public
 
 
 ##################################################
@@ -139,16 +119,14 @@ COPY --from=backend_sources /var/www/kubernetes-laravel /var/www/kubernetes-lara
 #                     CRON                       #
 ####                scheduler                 ####
 ##################################################
-# We need a CRON container to the Laravel Scheduler.
-# We'll start with the CLI container as our base,
-# as we only need to override the CMD which the container starts with to point at cron
+# override the CMD which the container starts with to point at cron
 FROM cli as cron
 
 LABEL maintainer="Thomas Chartron <thomas.chartron@gmail.com>"
 
 WORKDIR /var/www/kubernetes-laravel
 
-# We want to create a laravel.cron file with Laravel cron settings, which we can import into crontab,
+# Create a laravel.cron file with Laravel cron settings, which we can import into crontab,
 # and run crond as the primary command in the foreground
 RUN touch laravel.cron && \
     echo "* * * * * cd /var/www/kubernetes-laravel && php artisan schedule:run" >> laravel.cron && \
@@ -183,8 +161,6 @@ ENV OPCACHE_ENABLE="1" \
 
 WORKDIR /var/www/kubernetes-laravel
 
-# We need to install some requirements into our image,
-# used to compile our PHP extensions, as well as install all the extensions themselves.
 # naming the virtual package build-dependencies prevents docker-php-ext-enable or docker-php-ext-install from removing PHPIZE_DEPS !
 RUN apk add --virtual build-dependencies --no-cache ${PHPIZE_DEPS} ${PHP_BUILD_DEPS} \
     # PHP extensions configure
@@ -221,14 +197,12 @@ COPY docker/php/8.1-alpine3.16/conf/opcache.ini /usr/local/etc/php/conf.d/opcach
 # Cleanup
 RUN rm -rf /tmp/*
 
-# As FPM uses the www-data user when running our application,
+# FPM uses the www-data user when running our application,
 # we need to make sure that we also use that user when starting up,
 # so our user "owns" the application when running
 USER www-data
 
-# We have to copy in our code base from our initial build which we installed in the previous stage
 COPY --from=backend_sources --chown=www-data /var/www/kubernetes-laravel /var/www/kubernetes-laravel
-# COPY --from=frontend_sources --chown=www-data /var/www/kubernetes-laravel/public /var/www/kubernetes-laravel/public
 
 # Laravel cache command for production
 RUN php artisan config:cache
