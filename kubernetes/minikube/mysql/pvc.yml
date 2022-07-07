@@ -1,0 +1,13 @@
+# Use volumeClaimTemplates in statefulset
+# Use this in the deployment
+# apiVersion: v1
+# kind: PersistentVolumeClaim
+# metadata:
+#   name: mysql-pvc
+# spec:
+#   storageClassName: locale-storage-mysql
+#   accessModes:
+#     - ReadWriteOnce
+#   resources:
+#     requests:
+#       storage: 2Gi

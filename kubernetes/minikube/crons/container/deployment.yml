@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cron-deployment
+  labels:
+    app: cron
+    layer: backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cron
+      layer: backend
+  template:
+    metadata:
+      labels:
+        app: cron
+        layer: backend
+    spec:
+      imagePullSecrets:
+      - name: gitlab-k8s-laravel-cred
+      containers:
+        - name: cron
+          image: registry.gitlab.com/devops0077/k8s-laravel/cron:v0.0.1
+          imagePullPolicy: Always
+          envFrom:
+          - secretRef:
+              name: php-secret
+          - configMapRef:
+              name: php-configmap

@@ -1,0 +1,27 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: cron-scheduler
+spec:
+  schedule: "* * * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          imagePullSecrets:
+          - name: gitlab-k8s-laravel-cred
+          containers:
+          - name: scheduler
+            image: registry.gitlab.com/devops0077/k8s-laravel/php-cli:0.0.1
+            imagePullPolicy: Always
+            command:
+            - php
+            args:
+            - artisan
+            - schedule:run
+            envFrom:
+            - secretRef:
+                name: php-secret
+            - configMapRef:
+                name: php-configmap
+          restartPolicy: OnFailure

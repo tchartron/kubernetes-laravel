@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: php-fpm-deployment
+  labels:
+    app: php-fpm
+    tier: backend
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: php-fpm
+      tier: backend
+  template:
+    metadata:
+      labels:
+        app: php-fpm
+        tier: backend
+    spec:
+      imagePullSecrets:
+      - name: gitlab-k8s-laravel-cred
+      # This is bad because it runs migrations everytime a pod is started, meaning it migrate database when scaling app ...
+      # initContainers: # Run laravel migrations and stops deployment if it fails
+      # - name: migrations # Use for logs : kubectl logs php-fpm-856dcb9754-trf65 -c migrations
+      #   image: registry.gitlab.com/devops0077/k8s-laravel/php-cli:0.0.1
+      #   imagePullPolicy: Always
+      #   command:
+      #   - php
+      #   args:
+      #   - artisan
+      #   - migrate
+      #   - --force
+      #   envFrom:
+      #   - secretRef:
+      #       name: php-secret
+      #   - configMapRef:
+      #       name: php-configmap
+      containers:
+      - name: php-fpm
+        image: registry.gitlab.com/devops0077/k8s-laravel/php-fpm:0.0.1
+        imagePullPolicy: Always
+        envFrom:
+        - secretRef:
+            name: php-secret
+        - configMapRef:
+            name: php-configmap
+        ports:
+        - containerPort: 9000

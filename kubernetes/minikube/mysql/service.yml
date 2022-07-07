@@ -1,0 +1,19 @@
+# Headless service for stable DNS entries of StatefulSet members.
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-svc
+  labels:
+    app: mysql
+    tier: backend
+spec:
+  type: ClusterIP
+  clusterIP: None #https://kubernetes.io/docs/concepts/services-networking/service/#headless-services
+  selector:
+    app: mysql
+    tier: backend
+  ports:
+  - name: mysql-port
+    protocol: TCP
+    port: 3306
+    targetPort: 3306

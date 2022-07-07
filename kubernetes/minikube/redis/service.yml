@@ -1,0 +1,23 @@
+# Headless service means that only internal pods can communicate with each other. They are not exposed to external requests outside of the Kubernetes cluster. (even when using kube-proxy ?)
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-svc
+  labels:
+    app: redis
+    tier: backend
+spec:
+  type: ClusterIP
+  clusterIP: None
+  selector:
+    app: redis
+    tier: backend
+  ports:
+  - name: client
+    protocol: TCP
+    port: 6379
+    targetPort: 6379
+  - name: cluster
+    protocol: TCP
+    port: 16379
+    targetPort: 16379

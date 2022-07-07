@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: queues-deployment-default
+  labels:
+    app: queues
+    tier: backend
+    queue: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: queues
+      tier: backend
+      queue: default
+  template:
+    metadata:
+      labels:
+        app: queues
+        tier: backend
+        queue: default
+    spec:
+      imagePullSecrets:
+      - name: gitlab-k8s-laravel-cred
+      containers:
+      - name: queue-worker
+        image: registry.gitlab.com/devops0077/k8s-laravel/php-cli:0.0.1
+        imagePullPolicy: Always
+        command:
+        - php
+        args:
+        - artisan
+        - queue:work
+        - --queue=default
+        - --max-jobs=200
+        envFrom:
+        - secretRef:
+            name: php-secret
+        - configMapRef:
+            name: php-configmap
+        ports:
+        - containerPort: 9000

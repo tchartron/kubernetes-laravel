@@ -1,0 +1,39 @@
+# apiVersion: mysql.oracle.com/v2
+# kind: InnoDBCluster
+# metadata:
+#   name: mysql-innodb-cluster
+# spec:
+#   secretName: mysql-ic-secret
+#   tlsUseSelfSigned: true
+#   instances: 3
+#   router:
+#     instances: 1
+
+apiVersion: mysql.oracle.com/v2
+kind: InnoDBCluster
+metadata:
+  name: mysql-innodb-cluster
+spec:
+  secretName: mysql-ic-secret
+  tlsUseSelfSigned: true
+  instances: 1
+  version: 8.0.29
+  router:
+    instances: 1
+    version: 8.0.29
+  datadirVolumeClaimTemplate:
+    accessModes:
+      - ReadWriteOnce
+    resources:
+      requests:
+        storage: 10Gi
+    storageClassName: cinderstorage
+  # initDB:
+  #   clone:
+  #     donorUrl: mycluster-0.mycluster-instances.another.svc.cluster.local:3306
+  #     rootUser: root
+  #     secretKeyRef:
+  #       name: mysql-ic-secret
+  mycnf: |
+    [mysqld]
+    max_connections=162

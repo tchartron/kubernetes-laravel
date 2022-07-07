@@ -1,0 +1,57 @@
+# Working but using a statefulset with local volume makes more sense even if not scaling beacause of replication handling
+
+# apiVersion: apps/v1
+# kind: Deployment
+# metadata:
+#   name: mysql-deployment
+#   tier: backend
+# spec:
+#   selector:
+#     matchLabels:
+#       app: mysql
+#       tier: backend
+#   strategy:
+#     type: Recreate
+#   template:
+#     metadata:
+#       labels:
+#         app: mysql
+#         tier: backend
+#     spec:
+#       containers:
+#       - name: mysql
+#         image: mysql:8.0.29
+#         env:
+#         - name: MYSQL_ROOT_PASSWORD
+#           valueFrom:
+#             secretKeyRef:
+#               name: mysql-secret
+#               key: root-password
+#               optional: false
+#         - name: MYSQL_USER
+#           valueFrom:
+#             secretKeyRef:
+#               name: mysql-secret
+#               key: username
+#               optional: false
+#         - name: MYSQL_PASSWORD
+#           valueFrom:
+#             secretKeyRef:
+#               name: mysql-secret
+#               key: password
+#               optional: false
+#         - name: MYSQL_DATABASE
+#           valueFrom:
+#             configMapKeyRef:
+#               name: mysql-configmap
+#               key: mysql-database
+#         ports:
+#         - containerPort: 3306
+#           name: mysql
+#         volumeMounts:
+#         - name: mysql-persistent-storage
+#           mountPath: /var/lib/mysql
+#       volumes:
+#       - name: mysql-persistent-storage
+#         persistentVolumeClaim:
+#           claimName: mysql-pv-claim

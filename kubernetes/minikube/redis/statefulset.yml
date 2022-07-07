@@ -1,0 +1,146 @@
+# Sentinel version
+#
+# apiVersion: apps/v1
+# kind: StatefulSet
+# metadata:
+#   name: redis
+#   labels:
+#     app: redis
+#     tier: backend
+# spec:
+#   serviceName: redis-svc # $(podname).$(governing service domain)
+#   selector:
+#     matchLabels:
+#       app: redis
+#       tier: backend
+#   replicas: 3
+#   template:
+#     metadata:
+#       labels:
+#         app: redis
+#         tier: backend
+#     spec:
+#       initContainers:
+#       - name: config
+#         image: redis:7.0.2-alpine3.16
+#         command: [ "sh", "-c" ]
+#         args:
+#           - |
+#             cp /tmp/redis/redis.conf /etc/redis/redis.conf
+
+#             echo "finding master..."
+#             MASTER_FDQN=`hostname  -f | sed -e 's/redis-[0-9]\./redis-0./'`
+#             if [ "$(redis-cli -h sentinel -p 5000 ping)" != "PONG" ]; then
+#               echo "master not found, defaulting to redis-0"
+
+#               if [ "$(hostname)" == "redis-0" ]; then
+#                 echo "this is redis-0, not updating config..."
+#               else
+#                 echo "updating redis.conf..."
+#                 echo "slaveof $MASTER_FDQN 6379" >> /etc/redis/redis.conf
+#               fi
+#             else
+#               echo "sentinel found, finding master"
+#               MASTER="$(redis-cli -h sentinel -p 5000 sentinel get-master-addr-by-name mymaster | grep -E '(^redis-\d{1,})|([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3})')"
+#               echo "master found : $MASTER, updating redis.conf"
+#               echo "slaveof $MASTER 6379" >> /etc/redis/redis.conf
+#             fi
+#         volumeMounts:
+#         - name: redis-config
+#           mountPath: /etc/redis/
+#         - name: config
+#           mountPath: /tmp/redis/
+#       containers:
+#       - name: redis
+#         image: redis:7.0.2-alpine3.16
+#         command: ["redis-server"]
+#         args: ["/etc/redis/redis.conf", "--masterauth", "$(MASTERAUTH)", "--requirepass", "$(REQUIREPASS)"]
+#         envFrom:
+#         - secretRef:
+#             name: redis-secret
+#         ports:
+#         - containerPort: 6379
+#           name: redis
+#         volumeMounts:
+#         - name: redis-data # must correspond to volumeClaimTemplate metadata.name ==> Why ?
+#           mountPath: /data
+#         - name: redis-config
+#           mountPath: /etc/redis/
+#       volumes:
+#       - name: redis-config
+#         emptyDir: {}
+#       - name: config
+#         configMap:
+#           name: redis-configmap
+#   volumeClaimTemplates:
+#   - metadata:
+#       name: redis-data
+#     spec:
+#       accessModes: [ "ReadWriteOnce" ]
+#       storageClassName: "local-storage-redis"
+#       resources:
+#         requests:
+#           storage: 1Gi
+
+# Cluster version
+#
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: redis-cluster
+  labels:
+    app: redis
+    tier: backend
+spec:
+  serviceName: redis-svc
+  selector:
+    matchLabels:
+      app: redis
+      tier: backend
+  replicas: 6
+  template:
+    metadata:
+      labels:
+        app: redis
+        tier: backend
+    spec:
+      containers:
+      - name: redis
+        image: redis:7.0.2-alpine3.16
+        ports:
+        - containerPort: 6379
+          name: client
+        - containerPort: 16379
+          name: cluster
+        command: ["/conf/update-node.sh", "redis-server", "/conf/redis.conf", "--masterauth", "$(MASTERAUTH)", "--requirepass", "$(REQUIREPASS)"]
+        envFrom:
+        - secretRef:
+            name: redis-secret
+        env:
+        - name: POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        volumeMounts:
+        - name: conf
+          mountPath: /conf
+          readOnly: false
+        - name: redis-data
+          mountPath: /data
+          readOnly: false
+      volumes:
+      - name: conf
+        configMap:
+          name: redis-configmap
+          defaultMode: 0755
+  volumeClaimTemplates:
+  - metadata:
+      name: redis-data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: "local-storage-redis"
+      resources:
+        requests:
+          storage: 500Mi
+
+
