@@ -1,8 +1,8 @@
-# k8s-laravel
+# kubernetes-laravel
 Laravel deployment to kubernetes cluster  
-- [Minikube](https://github.com/tchartron/k8s-laravel#minikube-cluster)
-- [Ovh manual cluster setup](https://github.com/tchartron/k8s-laravel#ovh-manual-setup-using-3-nodes)
-- [Ovh managed kubernetes cluster](https://github.com/tchartron/k8s-laravel#ovh-managed-kubernetes-cluster)
+- [Minikube](https://github.com/tchartron/kubernetes-laravel#minikube-cluster)
+- [Ovh manual cluster setup](https://github.com/tchartron/kubernetes-laravel#ovh-manual-setup-using-3-nodes)
+- [Ovh managed kubernetes cluster](https://github.com/tchartron/kubernetes-laravel#ovh-managed-kubernetes-cluster)
 
 ___
 
@@ -22,18 +22,18 @@ Example of building a php image for a laravel application.
 Using two tags to update the latest tag and pin the image to a specific version at the same time  
 Execute from the root of this repository for docker build context  
 ```
-docker build -t registry.gitlab.com/devops0077/k8s-laravel/php-cli:0.0.1 -f docker/php/8.1-alpine3.16/Dockerfile --target cli .
-docker build -t registry.gitlab.com/devops0077/k8s-laravel/cron:0.0.1 -f docker/php/8.1-alpine3.16/Dockerfile --target cron .
-docker build -t registry.gitlab.com/devops0077/k8s-laravel/php-fpm:0.0.1 -f docker/php/8.1-alpine3.16/Dockerfile --target fpm .
-docker build -t registry.gitlab.com/devops0077/k8s-laravel/nginx:0.0.1 -f docker/nginx/1.22-alpine/Dockerfile --target nginx .
+docker build -t registry.gitlab.com/devops0077/kubernetes-laravel/php-cli:0.0.1 -f docker/php/8.1-alpine3.16/Dockerfile --target cli .
+docker build -t registry.gitlab.com/devops0077/kubernetes-laravel/cron:0.0.1 -f docker/php/8.1-alpine3.16/Dockerfile --target cron .
+docker build -t registry.gitlab.com/devops0077/kubernetes-laravel/php-fpm:0.0.1 -f docker/php/8.1-alpine3.16/Dockerfile --target fpm .
+docker build -t registry.gitlab.com/devops0077/kubernetes-laravel/nginx:0.0.1 -f docker/nginx/1.22-alpine/Dockerfile --target nginx .
 ```
 
 ### Push images
 ```
-docker push registry.gitlab.com/devops0077/k8s-laravel/php-cli:0.0.1
-docker push registry.gitlab.com/devops0077/k8s-laravel/cron:0.0.1
-docker push registry.gitlab.com/devops0077/k8s-laravel/php-fpm:0.0.1
-docker push registry.gitlab.com/devops0077/k8s-laravel/nginx:0.0.1
+docker push registry.gitlab.com/devops0077/kubernetes-laravel/php-cli:0.0.1
+docker push registry.gitlab.com/devops0077/kubernetes-laravel/cron:0.0.1
+docker push registry.gitlab.com/devops0077/kubernetes-laravel/php-fpm:0.0.1
+docker push registry.gitlab.com/devops0077/kubernetes-laravel/nginx:0.0.1
 ```
 
 ### Makefile usage
@@ -88,8 +88,8 @@ k = kubectl
 
 ### Private registry access
 ```
-# Create deploy token https://gitlab.com/devops0077/k8s-laravel/-/settings/repository
-k create secret docker-registry gitlab-k8s-laravel-cred --docker-server=registry.gitlab.com --docker-username=<deploy-token-username> --docker-password=<deploy-token-password> --docker-email=<account-email>
+# Create deploy token https://gitlab.com/devops0077/kubernetes-laravel/-/settings/repository
+k create secret docker-registry gitlab-kubernetes-laravel-cred --docker-server=registry.gitlab.com --docker-username=<deploy-token-username> --docker-password=<deploy-token-password> --docker-email=<account-email>
 ```
 
 ### Deployments
