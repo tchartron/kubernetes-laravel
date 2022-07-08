@@ -168,15 +168,36 @@ ___
 - 3 nodes d-2-4 (2 VCpu 4Go Ram 50Go NVMe)
 - 3 Mysql instance with replication
 - 2 Nginx instances
-- 2 Php-fpm instances
-- 3 Redis instances with replication and AOF persistence + Auth
+- 3 Php-fpm instances
+- 6 Redis instances running as a redis cluster
+- 1 Cronjob instance running as kubernetes CronJob
+- 1 Queue worker for default queue
 
 ---
 
+Use a openstack VRack for the 3 nodes
+
 ### Setup the cluster
+
+#### Initialize cluster using kubeadm
 ```
 
 ```
+#### Install container engine (containerd)
+```
+
+```
+
+#### Install network plugin (flannel)
+```
+
+```
+
+#### Install storage plugin (Openstack Cinder)
+```
+
+```
+
 
 
 ## OVH Managed Kubernetes Cluster
